@@ -117,6 +117,29 @@ class NestJSScaffolder:
             if dep["is_repository"]:
                 entity = dep["entity_name"]
                 mock_assignments.extend([
+                    f"    const {p_name}QueryBuilder: any = {{",
+                    f"      select: jest.fn().mockReturnThis(),",
+                    f"      addSelect: jest.fn().mockReturnThis(),",
+                    f"      innerJoin: jest.fn().mockReturnThis(),",
+                    f"      leftJoin: jest.fn().mockReturnThis(),",
+                    f"      where: jest.fn().mockReturnThis(),",
+                    f"      andWhere: jest.fn().mockReturnThis(),",
+                    f"      orWhere: jest.fn().mockReturnThis(),",
+                    f"      orderBy: jest.fn().mockReturnThis(),",
+                    f"      addOrderBy: jest.fn().mockReturnThis(),",
+                    f"      skip: jest.fn().mockReturnThis(),",
+                    f"      take: jest.fn().mockReturnThis(),",
+                    f"      limit: jest.fn().mockReturnThis(),",
+                    f"      offset: jest.fn().mockReturnThis(),",
+                    f"      groupBy: jest.fn().mockReturnThis(),",
+                    f"      getOne: jest.fn().mockResolvedValue(null),",
+                    f"      getMany: jest.fn().mockResolvedValue([]),",
+                    f"      getRawOne: jest.fn().mockResolvedValue(null),",
+                    f"      getRawMany: jest.fn().mockResolvedValue([]),",
+                    f"      getCount: jest.fn().mockResolvedValue(0),",
+                    f"      getManyAndCount: jest.fn().mockResolvedValue([[], 0]),",
+                    f"      execute: jest.fn().mockResolvedValue([]),",
+                    f"    }};",
                     f"    {p_name} = {{",
                     f"      findOne: jest.fn(),",
                     f"      find: jest.fn(),",
@@ -124,6 +147,7 @@ class NestJSScaffolder:
                     f"      create: jest.fn(),",
                     f"      update: jest.fn(),",
                     f"      delete: jest.fn(),",
+                    f"      createQueryBuilder: jest.fn().mockReturnValue({p_name}QueryBuilder),",
                     f"    }};",
                 ])
                 providers_list.extend([
