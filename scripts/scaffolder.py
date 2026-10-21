@@ -163,6 +163,8 @@ class NestJSScaffolder:
                 f"",
             ])
 
+        methods_str = chr(10).join(method_blocks)
+
         scaffold = f"""{chr(10).join(import_lines)}
 
 describe('{class_name}', () => {{
@@ -184,7 +186,8 @@ describe('{class_name}', () => {{
     expect(service).toBeDefined();
   }});
 
-{chr(10).join(method_blocks)}}}
+{methods_str}
+}});
 """
         return scaffold
 
