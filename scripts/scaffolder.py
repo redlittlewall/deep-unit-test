@@ -134,9 +134,18 @@ class NestJSScaffolder:
                 ])
             else:
                 p_type = dep["param_type"]
-                mock_assignments.extend([
-                    f"    {p_name} = {{}};",
-                ])
+                called_methods = sorted(set(re.findall(rf'this\.{p_name}\.([a-zA-Z0-9_]+)\(', service_code)))
+                if called_methods:
+                    method_mocks = [f"      {m}: jest.fn()," for m in called_methods]
+                    mock_assignments.extend([
+                        f"    {p_name} = {{",
+                        *method_mocks,
+                        f"    }};",
+                    ])
+                else:
+                    mock_assignments.extend([
+                        f"    {p_name} = {{}};",
+                    ])
                 providers_list.extend([
                     f"        {{",
                     f"          provide: {p_type},",
