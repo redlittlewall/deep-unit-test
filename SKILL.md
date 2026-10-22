@@ -98,11 +98,33 @@ If detected, reject immediately.
 
 ### NestJS (TypeScript + Jest)
 - **Scaffold:** `Test.createTestingModule`.
-- **Strict Mocking Rule:** In TypeScript strict mode, always pass explicit arguments:
+- **Strict Mocking Rule:** In TypeScript strict mode, always pass explicit arguments and type partial mocks as `any`:
   ```typescript
   mockFn.mockResolvedValue(undefined); // NOT mockResolvedValue()
   repository.findOne.mockResolvedValue(null); // NOT undefined
+  const partialEntity = { id: '123' } as any; // Avoid TS2345 on partial test fixtures
   ```
+- **Universal Proxy QueryBuilder Mock:** Use a JavaScript `Proxy` so any chained TypeORM method (`.delete()`, `.from()`, `.addGroupBy()`, `.leftJoinAndSelect()`) automatically returns the builder without `is not a function` errors:
+  ```typescript
+  const createQueryBuilderMock = () => {
+    const qb: any = new Proxy({}, {
+      get(target, prop) {
+        if (prop === 'then') return undefined;
+        if (!(prop in target)) target[prop] = jest.fn().mockReturnValue(qb);
+        return target[prop];
+      },
+    });
+    qb.getOne = jest.fn().mockResolvedValue(null);
+    qb.getMany = jest.fn().mockResolvedValue([]);
+    qb.getRawOne = jest.fn().mockResolvedValue(null);
+    qb.getRawMany = jest.fn().mockResolvedValue([]);
+    qb.getCount = jest.fn().mockResolvedValue(0);
+    qb.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+    qb.execute = jest.fn().mockResolvedValue({ affected: 1, raw: [] });
+    return qb;
+  };
+  ```
+- **Complete Repository Mock:** Always mock `findOne`, `find`, `findAndCount`, `save`, `create`, `update`, `delete`, `softDelete`, `restore`, `count`, `exist`, `remove`, and `createQueryBuilder`.
 - **Execution:** `npx jest --coverage --collectCoverageFrom=<source_file> <spec_file>`.
 
 ### Flutter (Dart + `package:test`)
@@ -113,3 +135,11 @@ If detected, reject immediately.
 ### Svelte / Web (TypeScript + Vitest)
 - **Scaffold:** In-memory store/service instantiation.
 - **Execution:** `npx vitest run --coverage <test_file>`.
+
+---
+
+## 5. Resilience & Recovery Patterns
+1. **Imported DTO & Enum Context Injection:** Resolve imported DTOs and Enums from the target service and provide their real keys/signatures in the prompt context to eliminate hallucinated properties (`TS2339` / `TS2345`).
+2. **Quarantine Rehydration:** When retrying failed suites, rehydrate the existing `.spec.ts` from quarantine, self-heal legacy mock definitions, and run a pre-flight test check to pass only the exact error delta to the model.
+3. **Faulty-Test Auto-Pruner:** If a suite has passing tests (e.g., 13 passed, 2 failed) after exhausting attempts, automatically prune only the failing `it(...)` blocks and preserve the verified passing tests if coverage $\ge 20\%$.
+
